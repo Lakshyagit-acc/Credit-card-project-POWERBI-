@@ -1,0 +1,59 @@
+
+-- DAX Queries for Credit Card Financial Dashboard
+
+-- 1. Age Group Classification
+AgeGroup = 
+SWITCH(
+    TRUE(),
+    'public cust_detail'[customer_age] < 40, "<40",
+    'public cust_detail'[customer_age] >= 40 && 'public cust_detail'[customer_age] < 50, "40-50",
+    'public cust_detail'[customer_age] >= 50 && 'public cust_detail'[customer_age] < 60, "50-60",
+    'public cust_detail'[customer_age] >= 60, "60+ age",
+    "Unknown Error"
+)
+
+-- 2. Income Group Classification
+IncomeGroupClass = 
+SWITCH(
+    TRUE(),
+    'public cust_detail'[income] < 30000, "Low Income",
+    'public cust_detail'[income] >= 30000 && 'public cust_detail'[income] < 60000, "Mid Income",
+    'public cust_detail'[income] >= 60000, "High Income",
+    "Unknown Error"
+)
+
+-- 3. Total Revenue (Calculated Column)
+Total_Revenue = 
+'public cc_detail'[interest_earned] + 
+'public cc_detail'[annual_fees] + 
+'public cc_detail'[total_trans_amt]
+
+-- 4. Week Number Column
+WeekNumCol = WEEKNUM('public cc_detail'[week_start_date])
+
+-- 5. Current Week Revenue
+Current_Week_Revenue = 
+CALCULATE(
+    SUM('public cc_detail'[Total_Revenue]),
+    FILTER(
+        ALL('public cc_detail'),
+        'public cc_detail'[WeekNumCol] = MAX('public cc_detail'[WeekNumCol])
+    )
+)
+
+-- 6. Previous Week Revenue
+Previous_Week_Revenue = 
+CALCULATE(
+    SUM('public cc_detail'[Total_Revenue]),
+    FILTER(
+        ALL('public cc_detail'),
+        'public cc_detail'[WeekNumCol] = MAX('public cc_detail'[WeekNumCol]) - 1
+    )
+)
+
+-- 7. Week-over-Week Revenue Change
+WeekOverWeekRevenue = 
+DIVIDE(
+    [Current_Week_Revenue] - [Previous_Week_Revenue],
+    [Previous_Week_Revenue]
+)
